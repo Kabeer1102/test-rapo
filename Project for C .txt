@@ -1,0 +1,215 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_ACCOUNTS 45
+
+// Structure to represent an account
+struct Account {
+    char name[100];
+    int pin;
+    double balance;
+    int status; // 0: active, 1: blocked
+};
+
+// Function prototypes
+int authenticate(struct Account accounts[], int numAccounts, int pin, int* attempts);
+void displayMenu();
+void checkBalance(struct Account* account);
+void deposit(struct Account* account, double amount);
+int withdraw(struct Account* account, double amount);
+void transfer(struct Account accounts[], int numAccounts, struct Account* sender, struct Account* receiver, double amount);
+void pickUpCard();
+
+int main() {
+    struct Account accounts[MAX_ACCOUNTS] = {
+        {"Sir Talha", 1020, 84000.0, 0},
+        {"Waqas Malik", 7036, 64000.0, 0},
+        {"Maryam Thaheem", 8292, 64000.0, 0},
+        {"Muhammad shariq", 8041, 4200.0, 0},
+        {"Muhammad kabeer", 7039, 5400.0, 0},
+        {"Muhammad Ateeb Madani", 7041, 420.0, 0},
+        {"Muhammad Arslan Virk", 7027, 720.0, 0},
+        {"Muhammad Rafay", 7050, 50000.0, 0},
+        {"Mutafa Aman", 7055, 12000.0, 0},
+        {"Samra Sharafat Ali", 7402, 24000.0, 0},
+        {"Abia Kashif", 7408, 41000.0, 0},
+        {"Aman Yaseen", 3386, 20000.0, 0},
+        {"hadia tariq", 7468, 15000.0, 0},
+        {"Jayden Correa", 3220, 24000.0, 0},
+        {"Romail KHan", 7424, 23000.0, 0},
+        {"Samia Nasir", 7441, 35000.0, 0},
+        {"Abdullah Sajid", 7029, 50000.0, 0},
+        {"Adeeb Khursheed", 6829, 64000.0, 0},
+        {"Ahsan Anwar", 7030, 54000.0, 0},
+        {"Arslan Ahmed", 6951, 21000.0, 0},
+        {"Faizan Ali", 6829, 53000.0, 0},
+        {"Hussain Ahmed", 7032, 18000.0, 0},
+        {"Ikram Nabi Abbasi", 7209, 1250.0, 0},
+        {"Mir umar Talpur", 6830, 10400.0, 0},
+        {"Muhammad Saad", 7033, 52000.0, 0},
+        {"Muhammad Sahil ", 7048, 90900.0, 0},
+        {"Mohammad Ashir", 6961, 83000.0, 0},
+        {"Mohammad Daniyal", 7194, 74000.0, 0},
+        {"Mohammad Senan Shah", 6830, 10000.0, 0},
+        {"Mohammad Sharoz Alam", 6848, 15000.0, 0},
+        {"Mohammad Shayan Shoaib", 6849, 76000.0, 0},
+        {"Muhammad Siddique", 6833, 84000.0, 0},
+        {"Pir Aftab Shah", 6832, 150.0, 0},
+        {"Prishay Adan", 7071, 10000.0, 0},
+        {"Qadir Baksh", 7029, 80000.0, 0},
+        {"Rashid Ali", 6831, 34000.0, 0},
+        {"Sahil kumar", 7065, 76000.0, 0},
+        {"Sanaullah chang Baloch", 7064, 84000.0, 0},
+        {"Sawera Hameed", 6849, 150.0, 0},
+        {"Sheharyar Ali Memon", 6833, 10000.0, 0},
+        {"Syed Anas Hussain", 1295, 80000.0, 0},
+        {"Syed Muhammad Zain", 6832, 34000.0, 0},
+        {"Syed Afaque Ali", 6830, 34000.0, 0},
+        {"Yusra Fazal Ghumro", 6848, 34000.0, 0}
+    };
+
+    int pin;
+    int index;
+    int attempts = 0; // Counter for incorrect attempts
+
+    printf("Welcome to BANK AL HABIB!\n");
+
+    // Main loop
+    while (1) {
+        if (attempts >= 3) {
+            printf("Your card has been blocked due to three consecutive incorrect PIN attempts. Please contact your bank for assistance.\n");
+            return 0;
+        }
+
+        printf("\nEnter your PIN: ");
+        scanf("%d", &pin);
+
+        index = authenticate(accounts, MAX_ACCOUNTS, pin, &attempts);
+
+        if (index != -1) {
+            printf("Welcome %s!\n", accounts[index].name);
+
+            attempts = 0;
+
+            // ATM menu loop
+            char choice;
+            do {
+                displayMenu();
+                printf("Enter your choice: ");
+                getchar(); // Consume newline character left by previous input
+                scanf("%c", &choice);
+
+                switch (choice) {
+                    case '1':
+                        checkBalance(&accounts[index]);
+                        break;
+                    case '2':
+                        {
+                            double depositAmount;
+                            printf("Enter amount to deposit: PKR ");
+                            scanf("%lf", &depositAmount);
+                            deposit(&accounts[index], depositAmount);
+                        }
+                        break;
+                    case '3':
+                        {
+                            double withdrawAmount;
+                            printf("Enter amount to withdraw: PKR ");
+                            scanf("%lf", &withdrawAmount);
+                            if (withdraw(&accounts[index], withdrawAmount)) {
+                                pickUpCard(); // Prompt to collect card after successful withdrawal
+                                return 0; // Terminate the program after withdrawing money
+                            }
+                        }
+                        break;
+                    case '4':
+                        {
+                            int receiverIndex;
+                            double transferAmount;
+                            printf("Enter receiver's PIN: ");
+                            scanf("%d", &pin);
+                            receiverIndex = authenticate(accounts, MAX_ACCOUNTS, pin, &attempts);
+                            if (receiverIndex != -1) {
+                                printf("Enter amount to transfer: PKR ");
+                                scanf("%lf", &transferAmount);
+                                transfer(accounts, MAX_ACCOUNTS, &accounts[index], &accounts[receiverIndex], transferAmount);
+                            } else {
+                                printf("Receiver's account not found or inactive.\n");
+                            }
+                        }
+                        break;
+                    case '5':
+                        printf("Exiting... Thank you!\n");
+                        return 0;
+                    default:
+                        printf("Invalid choice. Please try again.\n");
+                }
+            } while (1);
+        } else {
+            printf("Authentication failed. Please try again.\n");
+            attempts++; // Increment the attempts counter for each incorrect attempt
+        }
+    }
+
+    return 0;
+}
+
+// Function to authenticate the user
+int authenticate(struct Account accounts[], int numAccounts, int pin, int* attempts) {
+    for (int i = 0; i < numAccounts; ++i) {
+        if (accounts[i].pin == pin && accounts[i].status == 0) {
+            return i; // Return index of the authenticated account
+        }
+    }
+    return -1; // Return -1 if authentication fails
+}
+
+// Function to display the ATM menu
+void displayMenu() {
+    printf("\nATM Menu:\n");
+    printf("1. Check Balance\n");
+    printf("2. Deposit\n");
+    printf("3. Withdraw\n");
+    printf("4. Transfer Money\n");
+    printf("5. Exit\n");
+}
+
+// Function to check balance
+void checkBalance(struct Account* account) {
+    printf("Your balance is: PKR %.2f\n", account->balance);
+}
+
+// Function to deposit money
+void deposit(struct Account* account, double amount) {
+    account->balance += amount;
+    printf("Deposited PKR %.2f successfully. New balance: PKR %.2f\n", amount, account->balance);
+}
+
+// Function to withdraw money
+int withdraw(struct Account* account, double amount) {
+    if (account->balance >= amount) {
+        account->balance -= amount;
+        printf("Withdrawn PKR %.2f successfully. New balance: PKR %.2f\n", amount, account->balance);
+        return 1; // Return true if withdrawal is successful
+    } else {
+        printf("Insufficient balance.\n");
+        return 0; // Return false if withdrawal fails
+    }
+}
+
+// Function to transfer money between accounts
+void transfer(struct Account accounts[], int numAccounts, struct Account* sender, struct Account* receiver, double amount) {
+    if (sender->balance >= amount) {
+        sender->balance -= amount;
+        receiver->balance += amount;
+        printf("Transferred PKR %.2f from %s to %s successfully.\n", amount, sender->name, receiver->name);
+        printf("Sender's new balance: PKR %.2f\n", sender->balance);
+    } else {
+        printf("Insufficient balance for transfer.\n");
+    }
+}
+
+// Function to prompt the user to pick up the card
+void pickUpCard() {
+    printf("Please remember to pick up your card before leaving. Thank you!\n");
+}
